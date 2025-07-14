@@ -4,7 +4,7 @@ Once you have installed the required python packages, run the program.
 Generate a step change in your process, it should be within your normal operating range, and large enough to see a noticeable(>10%) change in your PV
 Enter the CV Start, CV Final, PV Start, and PV Final values.  It is also recommended that you enter the min/max values for the CV and PV
 Enter in your dead time, which is the amount of time it takes between changing your CV and seeing a change in the PV
-Enter the time that the PV reached the 63.2% value
+Enter the time that the PV reached the 63.2% value.  This is measured from the time you initiated the step change.  It MUST be larger than the dead time
 Enter your PID update rate in ms
 Hit the Optimize PID button.  It will now run through (potentially) thousands of combinations to find the "ideal" PID tunings.  
 Once complete, you can see the PID tuning parameters along with the overshoot and settling time values.
