@@ -7,23 +7,8 @@ from scipy.optimize import differential_evolution
 from dataclasses import dataclass
 import time
 
-### Make timestep changable, to match scan time on PLC PID
-
 # Constants
 settling_tolerance = 0.005
-
-# points_per_second = params.points_per_second
-# update_rate = 20
-# points_per_second = 50
-# pps=1/points_per_second
-# sec=points_per_second/1000
-# sim_time = 20
-# num_points = int(sim_time * points_per_second)
-# t_eval = np.linspace(0, sim_time, num_points)
-# timestep = t_eval[1] - t_eval[0]
-# t_eval = np.insert(t_eval, 0, 0.0)
-# t_eval = np.linspace(0, sim_time, num_points)
-# timestep = t_eval[1] - t_eval[0]
 
 @dataclass
 class SimulationParams:
@@ -78,21 +63,17 @@ def simulate_system(params: SimulationParams):
     cv = params.cv_start
     
     points_per_second = 1 / params.timestep
-    #points_per_second = 40
-    sim_time = 20
+    if params.dead_time <= 1:
+        sim_time = 20
+    else:
+        sim_time = params.dead_time * 20
     num_points = int(sim_time * points_per_second)
     t_eval = np.linspace(0, sim_time, num_points)
-#     t_eval = np.insert(t_eval, 0, 0.0)
-    #t_eval = np.arange(0, sim_time+params.timestep, params.timestep)
+
 
     # Fill out the cv buffer with the CV init value to avoid starting at zero
     cv_delay_steps = max(1, int(np.round(params.dead_time / params.timestep)))
     cv_buffer = [params.cv_start] * cv_delay_steps
-    disturbance_magnitude = 0.001
-    disturbance_time = 5
-    disturbance_duration = 3.0
-    disturbance_end = disturbance_time + disturbance_duration
-    disturbance_value = params.pv_final * disturbance_magnitude
     
     # Initialize lists for cv/pv/sp histories
     pv_array = [pv]
@@ -185,8 +166,6 @@ class PIDApp(tk.Tk):
         # These affect time constant and 63.2% value
         self.tau.trace_add("write", lambda *args: self.update_simulation_outputs())
         self.dead_time.trace_add("write", lambda *args: self.update_simulation_outputs())
-#         self.disturbance = tk.BooleanVar(value=True)
-#         self.noise = tk.BooleanVar(value=False)
         self.update_simulation_outputs()
         self.create_widgets()
         self.init_plot()
@@ -261,9 +240,6 @@ class PIDApp(tk.Tk):
         simulation_row += 1
         ttk.Label(simulation, text="PID Update Rate(ms):").grid(row=simulation_row, column=0, sticky="e")
         ttk.Entry(simulation, textvariable=self.pid_update).grid(row=simulation_row, column=1)
-
-#         ttk.Checkbutton(simulation, text="Disturbance", variable=self.disturbance).grid(row=3, column=0, sticky="w")
-#         ttk.Checkbutton(simulation, text="Measurement Noise", variable=self.noise).grid(row=4, column=0, sticky="w")
         
         simulation_row += 1
         ttk.Button(simulation, text="Optimize PID", command=self.run_optimization).grid(row=simulation_row, column=0, columnspan=2, pady=5)
@@ -309,8 +285,6 @@ class PIDApp(tk.Tk):
         instruction = ttk.LabelFrame(self, text="Instructions")
         instruction.grid(row=1, column=0, columnspan=2, sticky="nwew", padx=5, pady=5)
         
-        #ttk.Label(instruction, text="1. Make a step change in your CV.  This change should be in the normal operating range of your process, and should be large enough to see a noticable(>10% of full range) change in your PV").grid(row=0, column=0, stick="e")
-
         self.plot_frame = ttk.LabelFrame(self, text="Live Plot")
         self.plot_frame.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
         self.columnconfigure(1, weight=1)
